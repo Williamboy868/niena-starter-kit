@@ -1,6 +1,6 @@
 # Nienalabs Starter Kit
 
-This is a [Next.js](https://nextjs.org) starter kit designed for developers who want to use **Better Auth + Better Auth UI + Prisma + Shadcn**. This template saves you time on authentication setup so you can focus on building your product.
+This is a [Next.js](https://nextjs.org) starter kit designed for developers who want to use **Better Auth + Better Auth UI + Prisma + Shadcn + TRPC**. This template saves you time on authentication setup and TRPC backend configuration  so you can focus on building your product without worrying about boilerplates.
 
 ## Getting Started
 
@@ -98,3 +98,4 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - [Shadcn UI](https://ui.shadcn.com/)
 - [Better Auth UI Documentation](https://www.better-auth-ui.com)
 - [Prisma ORM Documentation](https://prisma.io/docs)
+- [TRPC Documentation](https://trpc.io/docs)
