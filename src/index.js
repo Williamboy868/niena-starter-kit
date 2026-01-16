@@ -325,6 +325,9 @@ export const runScaffold = async (projectName, injectedPrompts = prompts, inject
             
             if (answers.betterAuthUi) {
                 dependenciesToAdd['@daveyplate/better-auth-ui'] = templatePkg.dependencies['@daveyplate/better-auth-ui'];
+                dependenciesToAdd['@captchafox/react'] = templatePkg.dependencies['@captchafox/react'];
+                dependenciesToAdd['next-themes'] = templatePkg.dependencies['next-themes'];
+                dependenciesToAdd['@marsidev/react-turnstile'] = templatePkg.dependencies['@marsidev/react-turnstile'];
             }
         }
 
@@ -371,18 +374,18 @@ export const runScaffold = async (projectName, injectedPrompts = prompts, inject
     }
     
     // 6. Install Deps
-    const installSpinner = ora('Installing dependencies...').start();
+    console.log(chalk.bold.blue('\nInstalling dependencies...'));
     try {
         await new Promise((resolve, reject) => {
-             const child = injectedSpawn(packageManager, ['install'], { cwd: projectRoot, stdio: 'ignore' });
+             const child = injectedSpawn(packageManager, ['install'], { cwd: projectRoot, stdio: 'inherit' });
              child.on('close', (code) => {
                  if (code !== 0) reject(new Error(`${packageManager} install failed`));
                  else resolve();
              });
         });
-        installSpinner.succeed('Dependencies installed.');
+        console.log(chalk.green('Dependencies installed.'));
     } catch(e) {
-        installSpinner.fail('Failed to install dependencies.');
+        console.error(chalk.red('Failed to install dependencies.'));
         console.error(e);
     }
 

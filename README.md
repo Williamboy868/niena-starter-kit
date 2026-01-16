@@ -6,26 +6,23 @@ This is a [Next.js](https://nextjs.org) starter kit designed for developers who 
 
 Follow these steps to get your project up and running:
 
-### 1. Clone the repository
-
+### 1. Create a new project
+    
 ```bash
-git clone <your-repo-url>
-cd <your-repo-name>
+npx create-next-app-niena <project-name>
 ```
 
-### 2. Install dependencies
+Navigate to your project directory:
 
 ```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
+cd <project-name>
 ```
+
+Dependencies will be installed automatically.
 
 ### 3. Set up Environment Variables
 
-Create a `.env` file in the root directory and add the following variables:
+Create a `.env` file in the root directory and add the following variables(one is automatically created):
 
 ```env
 # Postgres Database URL (e.g., Neon or Supabase)
@@ -99,3 +96,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - [Better Auth UI Documentation](https://www.better-auth-ui.com)
 - [Prisma ORM Documentation](https://prisma.io/docs)
 - [TRPC Documentation](https://trpc.io/docs)
+
+## Contributing
+
+We welcome contributions! Please see our [CONTRIBUTORS.md](CONTRIBUTORS.md) for guidelines on how to contribute to this project.

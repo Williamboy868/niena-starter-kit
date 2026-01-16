@@ -67,6 +67,8 @@
     "superjson": "^2.2.6",
     "tailwind-merge": "^3.4.0",
     "vaul": "^1.1.2",
+    "@captchafox/react": "^1.10.0",
+    "@marsidev/react-turnstile": "^1.4.1",
     "zod": "^4.3.5"
   },
   "devDependencies": {
