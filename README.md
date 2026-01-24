@@ -1,6 +1,6 @@
 # Niena Starter Kit
 
-This is a [Next.js](https://nextjs.org) starter kit designed for developers who want to use **Better Auth + Better Auth UI + Prisma/Drizzle + Shadcn + tRPC +Tailwind Cssv4**. This template saves you time on authentication setup and tRPC backend configuration  so you can focus on building your product without worrying about boilerplates.
+This is a [Next.js](https://nextjs.org) starter kit designed for developers who want to use **Better Auth + Better Auth UI + Prisma/Drizzle + Shadcn + tRPC + Tailwind CSS v4**. This template saves you time on authentication setup and tRPC backend configuration so you can focus on building your product without worrying about boilerplates.
 
 ## Getting Started
 

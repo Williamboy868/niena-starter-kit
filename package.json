@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Williamboy868/niena-starter-kit.git"
+    "url": "https://github.com/Nienalabs-community/niena-starter-kit.git"
   },
   "scripts": {
     "test": "cross-env NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
