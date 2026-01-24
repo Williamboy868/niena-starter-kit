@@ -32,7 +32,35 @@ export default function RootLayout({
     jest.unstable_mockModule('fs-extra', () => ({
         default: {
             copy: jest.fn(),
-            readJson: jest.fn(() => Promise.resolve({ dependencies: {}, devDependencies: {} })),
+            readJson: jest.fn(() => Promise.resolve({ 
+                dependencies: {
+                    'dotenv': '^16.4.5',
+                    '@prisma/client': '^5.10.0',
+                    '@prisma/adapter-pg': '^5.10.0',
+                    'drizzle-orm': '^0.30.0',
+                    'postgres': '^3.4.0',
+                    'pg': '^8.11.0',
+                    'better-auth': '^1.0.0',
+                    '@daveyplate/better-auth-ui': '^1.0.0',
+                    'clsx': 'latest',
+                    'tailwind-merge': 'latest',
+                    'lucide-react': 'latest',
+                    'class-variance-authority': 'latest',
+                    '@trpc/client': 'latest',
+                    '@trpc/server': 'latest',
+                    '@trpc/react-query': 'latest',
+                    '@tanstack/react-query': 'latest',
+                    'superjson': 'latest',
+                    'server-only': 'latest',
+                    'client-only': 'latest'
+                }, 
+                devDependencies: {
+                    'prisma': '^5.10.0',
+                    'drizzle-kit': '^0.20.0',
+                    '@types/pg': '^8.11.0',
+                    'tw-animate-css': 'latest'
+                } 
+            })),
             writeJson: jest.fn(),
             readFile: jest.fn((path) => {
                 if (path && path.includes('layout.tsx')) return Promise.resolve(mockLayoutContent);
@@ -86,25 +114,29 @@ describe('runScaffold Logic', () => {
                 betterAuthUi: true,
                 shadcn: true, 
                 orm: 'prisma',
-                trpc: true
-            });
+                trpc: true,
+                generateClient: true
+            }).mockResolvedValueOnce({ generateClient: true });
 
         await runScaffold('test-app', mockPrompts, mockSpawn);
 
         expect(mockSpawn).toHaveBeenCalledWith('npx', expect.arrayContaining(['create-next-app@latest', 'test-app', '--use-npm']), expect.any(Object));
         expect(mockSpawn).toHaveBeenCalledWith('npm', ['install'], expect.objectContaining({ cwd: expect.stringContaining('test-app') }));
         expect(fs.default.copy).toHaveBeenCalled();
+        expect(mockSpawn).toHaveBeenCalledWith('npx', ['prisma', 'generate'], expect.objectContaining({ cwd: expect.stringContaining('test-app') }));
     });
 
     it('scaffolds a project with pnpm', async () => {
         mockPrompts = jest.fn()
             .mockResolvedValueOnce({ 
                 packageManager: 'pnpm',
-                auth: 'none', 
+                auth: 'better-auth', 
+                betterAuthUi: false,
                 shadcn: false,
                 orm: 'prisma',
-                trpc: false
-            });
+                trpc: false,
+                generateClient: false
+            }).mockResolvedValueOnce({ generateClient: false });
 
         await runScaffold('pnpm-app', mockPrompts, mockSpawn);
 
@@ -116,11 +148,13 @@ describe('runScaffold Logic', () => {
         mockPrompts = jest.fn()
             .mockResolvedValueOnce({ 
                 packageManager: 'yarn',
-                auth: 'none', 
+                auth: 'better-auth', 
+                betterAuthUi: false,
                 shadcn: false,
                 orm: 'prisma',
-                trpc: false
-            });
+                trpc: false,
+                generateClient: false
+            }).mockResolvedValueOnce({ generateClient: false });
 
         await runScaffold('yarn-app', mockPrompts, mockSpawn);
 
@@ -132,16 +166,89 @@ describe('runScaffold Logic', () => {
         mockPrompts = jest.fn()
             .mockResolvedValueOnce({ 
                 packageManager: 'bun',
-                auth: 'none', 
+                auth: 'better-auth', 
+                betterAuthUi: false,
                 shadcn: false,
                 orm: 'prisma',
-                trpc: false
-            });
+                trpc: false,
+                generateClient: false
+            }).mockResolvedValueOnce({ generateClient: false });
 
         await runScaffold('bun-app', mockPrompts, mockSpawn);
 
         expect(mockSpawn).toHaveBeenCalledWith('npx', expect.arrayContaining(['create-next-app@latest', 'bun-app', '--use-bun']), expect.any(Object));
         expect(mockSpawn).toHaveBeenCalledWith('bun', ['install'], expect.objectContaining({ cwd: expect.stringContaining('bun-app') }));
+    });
+
+    it('scaffolds a project with Drizzle ORM', async () => {
+        mockPrompts = jest.fn()
+            .mockResolvedValueOnce({ 
+                packageManager: 'npm',
+                auth: 'better-auth', 
+                betterAuthUi: true,
+                shadcn: true, 
+                orm: 'drizzle',
+                trpc: true,
+                generateClient: true
+            }).mockResolvedValueOnce({ generateClient: true });
+
+        await runScaffold('drizzle-app', mockPrompts, mockSpawn);
+
+        // Verify dependencies injected
+        expect(fs.default.writeJson).toHaveBeenCalledWith(
+            expect.stringContaining('package.json'), 
+            expect.objectContaining({
+                dependencies: expect.objectContaining({
+                    'drizzle-orm': expect.anything(),
+                    'postgres': expect.anything(),
+                    'dotenv': expect.anything()
+                }),
+                devDependencies: expect.objectContaining({
+                    'drizzle-kit': expect.anything()
+                })
+            }), 
+            expect.anything()
+        );
+
+        // Verify auth.ts content modification logic (indirectly via readFile/writeFile calls mocked logic if possible, 
+        // but here we just check if it was attempted to be written)
+        expect(fs.default.writeFile).toHaveBeenCalledWith(
+             expect.stringContaining('auth.ts'),
+             expect.any(String)
+        );
+
+        // Verify client generation
+        expect(mockSpawn).toHaveBeenCalledWith('npx', ['drizzle-kit', 'generate'], expect.objectContaining({ cwd: expect.stringContaining('drizzle-app') }));
+    });
+
+   it('scaffolds a project with Prisma ORM and verifies dotenv', async () => {
+        mockPrompts = jest.fn()
+            .mockResolvedValueOnce({ 
+                packageManager: 'npm',
+                auth: 'better-auth', 
+                betterAuthUi: true,
+                shadcn: true, 
+                orm: 'prisma',
+                trpc: true,
+                generateClient: true
+            }).mockResolvedValueOnce({ generateClient: true });
+
+        await runScaffold('prisma-app', mockPrompts, mockSpawn);
+
+        // Verify dependencies injected
+        expect(fs.default.writeJson).toHaveBeenCalledWith(
+            expect.stringContaining('package.json'), 
+            expect.objectContaining({
+                dependencies: expect.objectContaining({
+                    'dotenv': expect.anything(),
+                    '@prisma/client': expect.anything()
+                })
+            }), 
+            expect.anything()
+        );
+
+        // Verify client generation
+        expect(mockSpawn).toHaveBeenCalledWith('npx', ['prisma', 'generate'], expect.objectContaining({ cwd: expect.stringContaining('prisma-app') }));
     });
 
     it('scaffolds a project and removes tRPC provider when trpc is false', async () => {
@@ -152,8 +259,9 @@ describe('runScaffold Logic', () => {
                 betterAuthUi: true,
                 shadcn: true, 
                 orm: 'prisma',
-                trpc: false
-            });
+                trpc: false,
+                generateClient: false
+            }).mockResolvedValueOnce({ generateClient: false });
 
         await runScaffold('no-trpc-app', mockPrompts, mockSpawn);
 

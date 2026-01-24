@@ -1,6 +1,6 @@
-# Nienalabs Starter Kit
+# Niena Starter Kit
 
-This is a [Next.js](https://nextjs.org) starter kit designed for developers who want to use **Better Auth + Better Auth UI + Prisma + Shadcn + TRPC**. This template saves you time on authentication setup and TRPC backend configuration  so you can focus on building your product without worrying about boilerplates.
+This is a [Next.js](https://nextjs.org) starter kit designed for developers who want to use **Better Auth + Better Auth UI + Prisma/Drizzle + Shadcn + tRPC +Tailwind Cssv4**. This template saves you time on authentication setup and tRPC backend configuration  so you can focus on building your product without worrying about boilerplates.
 
 ## Getting Started
 
@@ -22,7 +22,7 @@ Dependencies will be installed automatically.
 
 ### 3. Set up Environment Variables
 
-Create a `.env` file in the root directory and add the following variables(one is automatically created):
+Create a `.env` file in the root directory and add the following variables(one is already set-up for you):
 
 ```env
 # Postgres Database URL (e.g., Neon or Supabase)
@@ -49,10 +49,22 @@ NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 
 Run the following command to migrate your database schema(a client is created automatically):
 
+**For Prisma:**
 ```bash
 npx prisma migrate dev
 ```
+**For Drizzle**
+Run the following commands if you face migration issues at first else go with the migration command `npx drizzle-kit migrate`
 
+```bash 
+npx drizzle-kit generate
+npx drizzle-kit push
+```
+
+**To enter drizzle or prisma studio to manage your database**
+```bash
+npx prisma studio
+npx drizzle-kit studio
 ### 5. Run Development Server
 
 ```bash
@@ -95,6 +107,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - [Shadcn UI](https://ui.shadcn.com/)
 - [Better Auth UI Documentation](https://www.better-auth-ui.com)
 - [Prisma ORM Documentation](https://prisma.io/docs)
+- [Drizzle ORM Documentation](https://orm.drizzle.team/docs/overview)
 - [TRPC Documentation](https://trpc.io/docs)
 
 ## Contributing

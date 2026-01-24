@@ -61,8 +61,7 @@ export const runScaffold = async (projectName, injectedPrompts = prompts, inject
             name: 'auth',
             message: 'Select Authentication Provider:',
             choices: [
-                { title: 'Better-auth', value: 'better-auth' },
-                { title: 'None', value: 'none' }
+                { title: 'Better-auth', value: 'better-auth' }
             ],
             initial: 0
         },
@@ -91,7 +90,8 @@ export const runScaffold = async (projectName, injectedPrompts = prompts, inject
             name: 'orm',
             message: 'Select ORM:',
             choices: [
-                { title: 'Prisma', value: 'prisma' }
+                { title: 'Prisma', value: 'prisma' },
+                { title: 'Drizzle', value: 'drizzle' }
             ],
             initial: 0
         },
@@ -217,9 +217,15 @@ export const runScaffold = async (projectName, injectedPrompts = prompts, inject
                     if (rel.startsWith('app/api/trpc') || rel.startsWith('app\\api\\trpc')) return false;
                 }
 
-                if (answers.orm !== 'prisma') {
-                    if (rel.startsWith('prisma') || rel.startsWith('prisma\\')) return false;
-                    if (rel.includes('lib/prisma.ts') || rel.includes('lib\\prisma.ts')) return false;
+                if (answers.orm === 'prisma') {
+                     // Exclude Drizzle files
+                     if (rel.startsWith('drizzle') || rel.startsWith('drizzle\\')) return false;
+                     if (rel === 'drizzle.config.ts') return false;
+                } else if (answers.orm === 'drizzle') {
+                     // Exclude Prisma files
+                     if (rel.startsWith('prisma') || rel.startsWith('prisma\\')) return false;
+                     if (rel.includes('lib/prisma.ts') || rel.includes('lib\\prisma.ts')) return false;
+                     if (rel === 'prisma.config.ts') return false;
                 }
 
                 return true;
@@ -260,6 +266,30 @@ export const runScaffold = async (projectName, injectedPrompts = prompts, inject
             }
 
             await fs.writeFile(layoutPath, layoutContent);
+        }
+
+        // Configure auth.ts based on ORM
+        const authPath = path.join(projectRoot, 'lib/auth.ts');
+        if (fs.existsSync(authPath)) {
+            let authContent = await fs.readFile(authPath, 'utf-8');
+            
+            if (answers.orm === 'prisma') {
+                // Remove Drizzle imports
+                authContent = authContent.replace(/import { db } from "@\/drizzle";.*/g, '');
+                authContent = authContent.replace(/import { drizzleAdapter } from "better-auth\/adapters\/drizzle";.*/g, '');
+                // Remove Drizzle adapter block
+                // Simple regex might fail on multiline, assuming standard formatting or using basic string location
+                // Since the file is template, we can match robustly or just targeted replacement
+                authContent = authContent.replace(/database: drizzleAdapter\(db, \{[\s\S]*?\}\),/g, ''); 
+            } else if (answers.orm === 'drizzle') {
+                // Remove Prisma imports
+                authContent = authContent.replace(/import { prismaAdapter } from "better-auth\/adapters\/prisma";.*/g, '');
+                authContent = authContent.replace(/import {prisma} from "@\/lib\/prisma".*/g, '');
+                // Remove Prisma adapter block
+                authContent = authContent.replace(/database: prismaAdapter\(prisma, \{[\s\S]*?\}\),/g, '');
+            }
+            
+            await fs.writeFile(authPath, authContent);
         }
 
 
@@ -320,8 +350,7 @@ export const runScaffold = async (projectName, injectedPrompts = prompts, inject
         // Auth
         if (answers.auth === 'better-auth') {
             dependenciesToAdd['better-auth'] = templatePkg.dependencies['better-auth'];
-            dependenciesToAdd['@prisma/client'] = templatePkg.dependencies['@prisma/client'];
-            dependenciesToAdd['@prisma/adapter-pg'] = templatePkg.dependencies['@prisma/adapter-pg'];
+            // Adapters handled in ORM section
             
             if (answers.betterAuthUi) {
                 dependenciesToAdd['@daveyplate/better-auth-ui'] = templatePkg.dependencies['@daveyplate/better-auth-ui'];
@@ -350,6 +379,12 @@ export const runScaffold = async (projectName, injectedPrompts = prompts, inject
              devDependenciesToAdd['prisma'] = templatePkg.devDependencies['prisma'];
              devDependenciesToAdd['@types/pg'] = templatePkg.devDependencies['@types/pg'];
              dependenciesToAdd['pg'] = templatePkg.dependencies['pg'];
+             dependenciesToAdd['dotenv'] = templatePkg.dependencies['dotenv'];
+        } else if (answers.orm === 'drizzle') {
+             dependenciesToAdd['drizzle-orm'] = templatePkg.dependencies['drizzle-orm'];
+             dependenciesToAdd['postgres'] = templatePkg.dependencies['postgres'];
+             dependenciesToAdd['dotenv'] = templatePkg.dependencies['dotenv'];
+             devDependenciesToAdd['drizzle-kit'] = templatePkg.devDependencies['drizzle-kit'];
         }
 
         // tRPC
@@ -387,6 +422,51 @@ export const runScaffold = async (projectName, injectedPrompts = prompts, inject
     } catch(e) {
         console.error(chalk.red('Failed to install dependencies.'));
         console.error(e);
+    }
+
+
+
+    // 7. Generate Client
+    const genAnswers = await injectedPrompts({
+        type: 'confirm',
+        name: 'generateClient',
+        message: 'Do you want to generate the auth client (DB schema)?',
+        initial: true
+    });
+
+    if (genAnswers.generateClient) {
+        console.log(chalk.blue('Generating client...'));
+        try {
+            let commandText = '';
+            let commandArgs = [];
+            
+            if (answers.orm === 'prisma') {
+                commandText = 'npx prisma generate';
+                commandArgs = ['npx', 'prisma', 'generate'];
+            } else if (answers.orm === 'drizzle') {
+                commandText = 'npx drizzle-kit generate';
+                commandArgs = ['npx', 'drizzle-kit', 'generate'];
+            }
+
+            if (commandText) {
+                 await new Promise((resolve, reject) => {
+                     // Split commandArgs correctly for spawn
+                     // npx is the command, rest are args
+                     const cmd = commandArgs[0];
+                     const args = commandArgs.slice(1);
+                     
+                     const child = injectedSpawn(cmd, args, { cwd: projectRoot, stdio: 'inherit' });
+                     child.on('close', (code) => {
+                         if (code !== 0) reject(new Error(`${commandText} failed`));
+                         else resolve();
+                     });
+                 });
+                 console.log(chalk.green('Client generated.'));
+            }
+        } catch (e) {
+             console.error(chalk.red('Failed to generate client.'));
+             console.error(e);
+        }
     }
 
     console.log(chalk.bold.green('\n✅ Project setup complete!'));
